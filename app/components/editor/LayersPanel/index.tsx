@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+/* eslint-disable @next/next/no-img-element */
 import { useEditor } from '@/context/EditorContext';
 
 export default function LayersPanel() {
@@ -137,12 +138,10 @@ export default function LayersPanel() {
               {layer.visible ? '👁' : '○'}
             </button>
             <div className="w-8 h-8 bg-[#333] border border-[#555] flex-shrink-0 overflow-hidden">
-              {layer.thumbnail ? (
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={layer.thumbnail} alt="" className="w-full h-full object-contain" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700" />
-              )}
+              {layer.thumbnail && layer.thumbnail.length > 0
+                ? <img src={layer.thumbnail} alt="" className="w-full h-full object-contain" />
+                : <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700" />
+              }
             </div>
             <span className="flex-1 truncate">{layer.name}</span>
             {layer.locked && <span className="text-[#999]">🔒</span>}
