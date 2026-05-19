@@ -365,7 +365,7 @@ function editorReducer(state: EditorState, action: EditorAction): EditorState {
       if (!activeLayer) return state;
       const newCanvas = createEmptyCanvas(activeLayer.width, activeLayer.height);
       const ctx = newCanvas.getContext('2d')!;
-      ctx.drawImage(activeCanvas.canvas, 0, 0);
+      ctx.drawImage(activeLayer.canvas, 0, 0);
       const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
       const data = imageData.data;
       const params = action.params;
