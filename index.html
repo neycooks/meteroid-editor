@@ -2,30 +2,26 @@
 <html translate="no">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=5.0, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#474747">
 <title>Meteroid | Online Photo Editor</title>
-<meta name="description" content="Meteroid Online Photo Editor lets you edit photos, apply effects, filters, add text, crop or resize pictures. Do Online Photo Editing in your browser for free!">
+<meta name="description" content="Meteroid Online Photo Editor lets you edit photos, apply effects, filters, add text, crop or resize pictures.">
 <link rel="stylesheet" href="css/editor.css">
-<link rel="stylesheet" href="css/icons.css">
 </head>
 <body class="theme0">
 <div id="app">
 <div id="menubar">
-<div class="menu-item" data-menu="file"><span>File</span></div>
-<div class="menu-item" data-menu="edit"><span>Edit</span></div>
-<div class="menu-item" data-menu="image"><span>Image</span></div>
-<div class="menu-item" data-menu="layer"><span>Layer</span></div>
-<div class="menu-item" data-menu="select"><span>Select</span></div>
-<div class="menu-item" data-menu="filter"><span>Filter</span></div>
-<div class="menu-item" data-menu="view"><span>View</span></div>
-<div class="menu-item" data-menu="window"><span>Window</span></div>
-<div class="menu-item" data-menu="help"><span>Help</span></div>
-<div class="menu-item" data-menu="more"><span>More ▾</span></div>
+<div class="mi" data-m="file"><span>File</span></div>
+<div class="mi" data-m="edit"><span>Edit</span></div>
+<div class="mi" data-m="image"><span>Image</span></div>
+<div class="mi" data-m="layer"><span>Layer</span></div>
+<div class="mi" data-m="select"><span>Select</span></div>
+<div class="mi" data-m="filter"><span>Filter</span></div>
+<div class="mi" data-m="view"><span>View</span></div>
+<div class="mi" data-m="window"><span>Window</span></div>
+<div class="mi" data-m="help"><span>Help</span></div>
 </div>
-<div id="optionsbar">
-<div class="option-group" id="tool-options"></div>
-</div>
+<div id="optionsbar"><div id="tool-options"></div></div>
 <div id="mainarea">
 <div id="toolbar"></div>
 <div id="workspace">
@@ -33,124 +29,57 @@
 <canvas id="canvas"></canvas>
 <canvas id="overlay"></canvas>
 </div>
-<div id="rulers">
-<div id="ruler-h"></div>
-<div id="ruler-v"></div>
-</div>
+<div id="bcur" style="display:none;position:absolute;pointer-events:none;border:1px solid #fff;border-radius:50%;z-index:50;box-shadow:0 0 0 1px rgba(0,0,0,0.5)"></div>
 </div>
 <div id="rightpanel">
-<div class="panel-tabs">
-<div class="panel-tab active" data-panel="navigator">Navigator</div>
-<div class="panel-tab" data-panel="info">Info</div>
-<div class="panel-tab" data-panel="histogram">Histogram</div>
-<div class="panel-tab" data-panel="adjustments">Adjustments</div>
-<div class="panel-tab" data-panel="layers">Layers</div>
-<div class="panel-tab" data-panel="channels">Channels</div>
-<div class="panel-tab" data-panel="paths">Paths</div>
+<div class="ptabs">
+<div class="ptab act" data-p="layers">Layers</div>
+<div class="ptab" data-p="adjustments">Adj</div>
+<div class="ptab" data-p="history">History</div>
 </div>
-<div class="panel-content" id="panel-navigator">
-<div class="panel-header">Navigator</div>
-<canvas id="navigator-canvas"></canvas>
-<div class="zoom-control">
-<span>-</span>
-<input type="range" id="zoom-slider" min="1" max="3200" value="100">
-<span>+</span>
-<span id="zoom-value">100%</span>
-</div>
-</div>
-<div class="panel-content" id="panel-info" style="display:none">
-<div class="panel-header">Info</div>
-<div class="info-row"><span>X:</span><span id="info-x">0</span></div>
-<div class="info-row"><span>Y:</span><span id="info-y">0</span></div>
-<div class="info-row"><span>R:</span><span id="info-r">0</span></div>
-<div class="info-row"><span>G:</span><span id="info-g">0</span></div>
-<div class="info-row"><span>B:</span><span id="info-b">0</span></div>
-<div class="info-row"><span>A:</span><span id="info-a">255</span></div>
-</div>
-<div class="panel-content" id="panel-histogram" style="display:none">
-<div class="panel-header">Histogram</div>
-<canvas id="histogram-canvas"></canvas>
-</div>
-<div class="panel-content" id="panel-adjustments" style="display:none">
-<div class="panel-header">Adjustments</div>
-<div class="adj-btn" data-adj="levels">Levels</div>
-<div class="adj-btn" data-adj="curves">Curves</div>
-<div class="adj-btn" data-adj="brightness">Brightness/Contrast</div>
-<div class="adj-btn" data-adj="huesat">Hue/Saturation</div>
-<div class="adj-btn" data-adj="colorbalance">Color Balance</div>
-<div class="adj-btn" data-adj="invert">Invert</div>
-<div class="adj-btn" data-adj="desaturate">Desaturate</div>
-<div class="adj-btn" data-adj="threshold">Threshold</div>
-<div class="adj-btn" data-adj="posterize">Posterize</div>
-</div>
-<div class="panel-content" id="panel-layers" style="display:none">
-<div class="panel-header">Layers</div>
-<div class="layer-controls">
-<select id="blend-mode">
-<option value="normal">Normal</option>
-<option value="dissolve">Dissolve</option>
-<option value="darken">Darken</option>
-<option value="multiply">Multiply</option>
-<option value="colorBurn">Color Burn</option>
-<option value="linearBurn">Linear Burn</option>
-<option value="lighten">Lighten</option>
-<option value="screen">Screen</option>
-<option value="colorDodge">Color Dodge</option>
-<option value="linearDodge">Linear Dodge</option>
-<option value="overlay">Overlay</option>
-<option value="softLight">Soft Light</option>
-<option value="hardLight">Hard Light</option>
-<option value="vividLight">Vivid Light</option>
-<option value="linearLight">Linear Light</option>
-<option value="pinLight">Pin Light</option>
-<option value="difference">Difference</option>
-<option value="exclusion">Exclusion</option>
-<option value="hue">Hue</option>
-<option value="saturation">Saturation</option>
-<option value="color">Color</option>
-<option value="luminosity">Luminosity</option>
+<div class="pcontent" id="panel-layers">
+<div class="lctrl">
+<select id="blend">
+<option value="normal">Normal</option><option value="dissolve">Dissolve</option><option value="darken">Darken</option><option value="multiply">Multiply</option><option value="colorBurn">Color Burn</option><option value="lighten">Lighten</option><option value="screen">Screen</option><option value="colorDodge">Color Dodge</option><option value="overlay">Overlay</option><option value="softLight">Soft Light</option><option value="hardLight">Hard Light</option><option value="difference">Difference</option><option value="exclusion">Exclusion</option><option value="hue">Hue</option><option value="saturation">Saturation</option><option value="color">Color</option><option value="luminosity">Luminosity</option>
 </select>
-<div class="opacity-control">
-<span>Opacity:</span>
-<input type="range" id="layer-opacity" min="0" max="100" value="100">
-<span id="opacity-value">100%</span>
+<div class="opctrl"><span>Opacity:</span><input type="range" id="lopacity" min="0" max="100" value="100"><span id="oval">100%</span></div>
+</div>
+<div id="llist"></div>
+<div class="lbtns">
+<button id="btn-nl" title="New Layer">+</button>
+<button id="btn-dl" title="Duplicate">⧉</button>
+<button id="btn-rl" title="Delete">🗑</button>
+<button id="btn-ml" title="Merge Down">⤓</button>
+<button id="btn-fl" title="Flatten">⊟</button>
 </div>
 </div>
-<div id="layers-list"></div>
-<div class="layer-buttons">
-<button id="btn-new-layer" title="New Layer">📄</button>
-<button id="btn-duplicate-layer" title="Duplicate Layer">⧉</button>
-<button id="btn-delete-layer" title="Delete Layer">🗑</button>
-<button id="btn-merge-down" title="Merge Down">⤓</button>
-<button id="btn-flatten" title="Flatten Image">⊟</button>
+<div class="pcontent" id="panel-adjustments" style="display:none">
+<div class="abtn" data-a="levels">Levels</div>
+<div class="abtn" data-a="curves">Curves</div>
+<div class="abtn" data-a="brightness">Brightness/Contrast</div>
+<div class="abtn" data-a="huesat">Hue/Saturation</div>
+<div class="abtn" data-a="colorbalance">Color Balance</div>
+<div class="abtn" data-a="invert">Invert</div>
+<div class="abtn" data-a="desaturate">Desaturate</div>
+<div class="abtn" data-a="threshold">Threshold</div>
+<div class="abtn" data-a="posterize">Posterize</div>
 </div>
-</div>
-<div class="panel-content" id="panel-channels" style="display:none">
-<div class="panel-header">Channels</div>
-<div class="channel-item active">RGB</div>
-<div class="channel-item">Red</div>
-<div class="channel-item">Green</div>
-<div class="channel-item">Blue</div>
-</div>
-<div class="panel-content" id="panel-paths" style="display:none">
-<div class="panel-header">Paths</div>
-<div class="path-empty">No paths</div>
+<div class="pcontent" id="panel-history" style="display:none">
+<div id="hlist"></div>
 </div>
 </div>
 </div>
 <div id="statusbar">
-<span id="status-tool">Brush</span>
-<span id="status-zoom">100%</span>
-<span id="status-size">800 × 600</span>
-<span id="status-pos">0, 0</span>
-<span id="status-selection"></span>
+<span id="stool">Brush</span>
+<span id="szoom">100%</span>
+<span id="ssize">800 × 600</span>
+<span id="spos">0, 0</span>
+<span id="ssel"></span>
 </div>
 </div>
-<div id="context-menu" class="hidden"></div>
-<div id="modal-overlay" class="hidden">
-<div id="modal"></div>
-</div>
-<input type="file" id="file-input" accept="image/*,.psd,.svg,.webp,.avif,.pdf" style="display:none">
+<div id="cmenu" class="hid"></div>
+<div id="moverlay" class="hid"><div id="modal"></div></div>
+<input type="file" id="file-input" accept="image/*" style="display:none">
 <script src="js/utils.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/layers.js"></script>

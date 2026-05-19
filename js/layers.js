@@ -1,220 +1,144 @@
-var Layers = {};
+var L={};
+L.init=function(){A.st.layers=[];A.st.aid=null};
 
-Layers.init = function() {
-  App.state.layers = [];
-  App.state.activeLayerId = null;
+L.add=function(name,canvas,locked){
+var id=U.id();
+var layer={id:id,name:name||('Layer '+(A.st.layers.length+1)),visible:true,opacity:100,blend:'normal',locked:locked||false,canvas:canvas,x:0,y:0};
+A.st.layers.unshift(layer);
+A.st.aid=id;
+L.render();
+return layer;
 };
 
-Layers.addLayer = function(name, canvas, locked) {
-  var id = Utils.genId();
-  var layer = {
-    id: id,
-    name: name || ('Layer ' + (App.state.layers.length + 1)),
-    visible: true,
-    opacity: 100,
-    blendMode: 'normal',
-    locked: locked || false,
-    canvas: canvas,
-    x: 0,
-    y: 0,
-  };
-  App.state.layers.unshift(layer);
-  App.state.activeLayerId = id;
-  Layers.renderList();
-  return layer;
+L.addNew=function(){
+var c=document.createElement('canvas');
+c.width=A.st.w;c.height=A.st.h;
+A.saveHist();
+L.add('Layer '+(A.st.layers.length+1),c);
+C.render();L.render();
 };
 
-Layers.addNewLayer = function() {
-  var canvas = document.createElement('canvas');
-  canvas.width = App.state.canvasWidth;
-  canvas.height = App.state.canvasHeight;
-  App.saveHistory();
-  Layers.addLayer('Layer ' + (App.state.layers.length + 1), canvas);
-  Canvas.render();
-  Layers.renderList();
+L.del=function(){
+if(A.st.layers.length<=1)return;
+var i=A.st.layers.findIndex(function(l){return l.id===A.st.aid});
+if(i<0)return;
+A.saveHist();
+A.st.layers.splice(i,1);
+A.st.aid=A.st.layers[Math.min(i,A.st.layers.length-1)].id;
+C.render();L.render();
 };
 
-Layers.deleteActive = function() {
-  if (App.state.layers.length <= 1) return;
-  var idx = Layers.getActiveIndex();
-  if (idx < 0) return;
-  App.saveHistory();
-  App.state.layers.splice(idx, 1);
-  App.state.activeLayerId = App.state.layers[Math.min(idx, App.state.layers.length - 1)].id;
-  Canvas.render();
-  Layers.renderList();
+L.dup=function(){
+var l=A.st.layers.find(function(x){return x.id===A.st.aid});
+if(!l)return;
+A.saveHist();
+var c=document.createElement('canvas');
+c.width=l.canvas.width;c.height=l.canvas.height;
+c.getContext('2d').drawImage(l.canvas,0,0);
+L.add(l.name+' copy',c);
+C.render();L.render();
 };
 
-Layers.duplicateActive = function() {
-  var layer = Layers.getActive();
-  if (!layer) return;
-  App.saveHistory();
-  var canvas = document.createElement('canvas');
-  canvas.width = layer.canvas.width;
-  canvas.height = layer.canvas.height;
-  canvas.getContext('2d').drawImage(layer.canvas, 0, 0);
-  var newLayer = Layers.addLayer(layer.name + ' copy', canvas);
-  Canvas.render();
-  Layers.renderList();
+L.mergeDown=function(){
+var i=A.st.layers.findIndex(function(l){return l.id===A.st.aid});
+if(i<0||i>=A.st.layers.length-1)return;
+A.saveHist();
+var top=A.st.layers[i],bot=A.st.layers[i+1];
+var c=document.createElement('canvas');
+c.width=A.st.w;c.height=A.st.h;
+var x=c.getContext('2d');
+x.drawImage(bot.canvas,0,0);
+x.globalAlpha=top.opacity/100;
+x.drawImage(top.canvas,top.x,top.y);
+A.st.layers.splice(i,1);
+bot.canvas=c;
+A.st.aid=bot.id;
+C.render();L.render();
 };
 
-Layers.mergeDown = function() {
-  var idx = Layers.getActiveIndex();
-  if (idx < 0 || idx >= App.state.layers.length - 1) return;
-  App.saveHistory();
-  var top = App.state.layers[idx];
-  var bottom = App.state.layers[idx + 1];
-  var canvas = document.createElement('canvas');
-  canvas.width = App.state.canvasWidth;
-  canvas.height = App.state.canvasHeight;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(bottom.canvas, 0, 0);
-  ctx.globalAlpha = top.opacity / 100;
-  ctx.drawImage(top.canvas, top.x, top.y);
-  App.state.layers.splice(idx, 1);
-  bottom.canvas = canvas;
-  App.state.activeLayerId = bottom.id;
-  Canvas.render();
-  Layers.renderList();
+L.flatten=function(){
+A.saveHist();
+var c=document.createElement('canvas');
+c.width=A.st.w;c.height=A.st.h;
+var x=c.getContext('2d');
+x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+for(var i=A.st.layers.length-1;i>=0;i--){
+var l=A.st.layers[i];
+if(!l.visible)continue;
+x.globalAlpha=l.opacity/100;
+x.drawImage(l.canvas,l.x,l.y);
+}
+A.st.layers=[];
+L.add('Background',c,false);
+C.render();L.render();
 };
 
-Layers.flatten = function() {
-  App.saveHistory();
-  var canvas = document.createElement('canvas');
-  canvas.width = App.state.canvasWidth;
-  canvas.height = App.state.canvasHeight;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  for (var i = App.state.layers.length - 1; i >= 0; i--) {
-    var layer = App.state.layers[i];
-    if (!layer.visible) continue;
-    ctx.globalAlpha = layer.opacity / 100;
-    ctx.drawImage(layer.canvas, layer.x, layer.y);
-  }
-  App.state.layers = [];
-  Layers.addLayer('Background', canvas, false);
-  Canvas.render();
-  Layers.renderList();
+L.get=function(){return A.st.layers.find(function(l){return l.id===A.st.aid})};
+
+L.thumb=function(layer){
+if(!layer)return;
+var t=document.querySelector('.li[data-id="'+layer.id+'"] .lthumb canvas');
+if(t){var x=t.getContext('2d');x.clearRect(0,0,32,32);var s=Math.min(32/layer.canvas.width,32/layer.canvas.height);x.drawImage(layer.canvas,(32-layer.canvas.width*s)/2,(32-layer.canvas.height*s)/2,layer.canvas.width*s,layer.canvas.height*s)}
 };
 
-Layers.getActive = function() {
-  return App.state.layers.find(function(l) { return l.id === App.state.activeLayerId; });
+L.render=function(){
+var list=document.getElementById('llist');
+list.innerHTML='';
+A.st.layers.forEach(function(layer){
+var item=document.createElement('div');
+item.className='li'+(layer.id===A.st.aid?' act':'');
+item.dataset.id=layer.id;
+var tc=document.createElement('canvas');tc.width=32;tc.height=32;
+var tx=tc.getContext('2d');
+var s=Math.min(32/layer.canvas.width,32/layer.canvas.height);
+tx.drawImage(layer.canvas,(32-layer.canvas.width*s)/2,(32-layer.canvas.height*s)/2,layer.canvas.width*s,layer.canvas.height*s);
+var vis=document.createElement('span');
+vis.className='lvis';
+vis.textContent=layer.visible?'👁':'○';
+vis.addEventListener('click',function(e){e.stopPropagation();layer.visible=!layer.visible;L.render();C.render()});
+var thumb=document.createElement('div');
+thumb.className='lthumb';
+thumb.appendChild(tc);
+var name=document.createElement('span');
+name.className='lname';
+name.textContent=layer.name;
+name.addEventListener('dblclick',function(){var n=prompt('Layer name:',layer.name);if(n){layer.name=n;L.render()}});
+item.appendChild(vis);
+item.appendChild(thumb);
+item.appendChild(name);
+if(layer.locked){var lk=document.createElement('span');lk.style.fontSize='10px';lk.style.color='#888';lk.textContent='🔒';item.appendChild(lk)}
+item.addEventListener('click',function(e){
+if(e.target!==vis){
+A.st.aid=layer.id;
+L.render();
+document.getElementById('lopacity').value=layer.opacity;
+document.getElementById('oval').textContent=layer.opacity+'%';
+document.getElementById('blend').value=layer.blend;
+}
+});
+list.appendChild(item);
+});
 };
 
-Layers.getActiveIndex = function() {
-  return App.state.layers.findIndex(function(l) { return l.id === App.state.activeLayerId; });
+L.snapshot=function(){
+var layers=A.st.layers.map(function(layer){
+var x=layer.canvas.getContext('2d');
+var d=x.getImageData(0,0,layer.canvas.width,layer.canvas.height);
+return{id:layer.id,name:layer.name,visible:layer.visible,opacity:layer.opacity,blend:layer.blend,imageData:d,x:layer.x,y:layer.y};
+});
+return{layers:layers,aid:A.st.aid,w:A.st.w,h:A.st.h,name:'Edit'};
 };
 
-Layers.updateThumb = function(layer) {
-  if (!layer) return;
-  var thumb = document.querySelector('.layer-item[data-id="' + layer.id + '"] .layer-thumb canvas');
-  if (thumb) {
-    var ctx = thumb.getContext('2d');
-    ctx.clearRect(0, 0, 32, 32);
-    var scale = Math.min(32 / layer.canvas.width, 32 / layer.canvas.height);
-    var w = layer.canvas.width * scale;
-    var h = layer.canvas.height * scale;
-    ctx.drawImage(layer.canvas, (32 - w) / 2, (32 - h) / 2, w, h);
-  }
+L.restore=function(snap){
+A.st.w=snap.w;A.st.h=snap.h;
+A.st.layers=snap.layers.map(function(s){
+var c=document.createElement('canvas');
+c.width=s.imageData.width;c.height=s.imageData.height;
+var x=c.getContext('2d');
+x.putImageData(s.imageData,0,0);
+return{id:s.id,name:s.name,visible:s.visible,opacity:s.opacity,blend:s.blend,canvas:c,x:s.x,y:s.y,locked:false};
+});
+A.st.aid=snap.aid;
 };
 
-Layers.renderList = function() {
-  var list = document.getElementById('layers-list');
-  list.innerHTML = '';
-  App.state.layers.forEach(function(layer) {
-    var item = document.createElement('div');
-    item.className = 'layer-item' + (layer.id === App.state.activeLayerId ? ' active' : '');
-    item.dataset.id = layer.id;
-
-    var thumbCanvas = document.createElement('canvas');
-    thumbCanvas.width = 32;
-    thumbCanvas.height = 32;
-    var tctx = thumbCanvas.getContext('2d');
-    var scale = Math.min(32 / layer.canvas.width, 32 / layer.canvas.height);
-    var w = layer.canvas.width * scale;
-    var h = layer.canvas.height * scale;
-    tctx.drawImage(layer.canvas, (32 - w) / 2, (32 - h) / 2, w, h);
-
-    item.innerHTML =
-      '<span class="layer-vis">' + (layer.visible ? '👁' : '○') + '</span>' +
-      '<div class="layer-thumb"></div>' +
-      '<span class="layer-name">' + layer.name + '</span>' +
-      (layer.locked ? '<span class="layer-lock">🔒</span>' : '');
-
-    item.querySelector('.layer-thumb').appendChild(thumbCanvas);
-
-    item.addEventListener('click', function(e) {
-      if (e.target.classList.contains('layer-vis')) {
-        layer.visible = !layer.visible;
-        Layers.renderList();
-        Canvas.render();
-        return;
-      }
-      App.state.activeLayerId = layer.id;
-      Layers.renderList();
-      document.getElementById('layer-opacity').value = layer.opacity;
-      document.getElementById('opacity-value').textContent = layer.opacity + '%';
-      document.getElementById('blend-mode').value = layer.blendMode;
-    });
-
-    item.addEventListener('dblclick', function() {
-      var name = prompt('Layer name:', layer.name);
-      if (name) {
-        layer.name = name;
-        Layers.renderList();
-      }
-    });
-
-    list.appendChild(item);
-  });
-};
-
-Layers.createSnapshot = function() {
-  var layers = App.state.layers.map(function(layer) {
-    var ctx = layer.canvas.getContext('2d');
-    var imageData = ctx.getImageData(0, 0, layer.canvas.width, layer.canvas.height);
-    return {
-      id: layer.id,
-      name: layer.name,
-      visible: layer.visible,
-      opacity: layer.opacity,
-      blendMode: layer.blendMode,
-      imageData: imageData,
-      x: layer.x,
-      y: layer.y,
-    };
-  });
-  return {
-    layers: layers,
-    activeLayerId: App.state.activeLayerId,
-    canvasWidth: App.state.canvasWidth,
-    canvasHeight: App.state.canvasHeight,
-  };
-};
-
-Layers.restoreSnapshot = function(snap) {
-  App.state.canvasWidth = snap.canvasWidth;
-  App.state.canvasHeight = snap.canvasHeight;
-  App.state.layers = snap.layers.map(function(s) {
-    var canvas = document.createElement('canvas');
-    canvas.width = s.imageData.width;
-    canvas.height = s.imageData.height;
-    var ctx = canvas.getContext('2d');
-    ctx.putImageData(s.imageData, 0, 0);
-    return {
-      id: s.id,
-      name: s.name,
-      visible: s.visible,
-      opacity: s.opacity,
-      blendMode: s.blendMode,
-      canvas: canvas,
-      x: s.x,
-      y: s.y,
-      locked: false,
-    };
-  });
-  App.state.activeLayerId = snap.activeLayerId;
-};
-
-window.Layers = Layers;
+window.L=L;

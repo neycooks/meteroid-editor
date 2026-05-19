@@ -1,299 +1,166 @@
-var App = {};
-
-App.state = {
-  layers: [],
-  activeLayerId: null,
-  activeTool: 'brush',
-  brushSize: 10,
-  brushOpacity: 100,
-  brushHardness: 100,
-  fgColor: '#000000',
-  bgColor: '#ffffff',
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  canvasWidth: 800,
-  canvasHeight: 600,
-  selection: null,
-  history: [],
-  historyIndex: -1,
-  showRulers: true,
-  showGrid: false,
-  isDrawing: false,
-  lastX: 0,
-  lastY: 0,
-  isPanning: false,
-  panStartX: 0,
-  panStartY: 0,
-  cloneSource: null,
-  textContent: '',
-  fontSize: 24,
-  fontFamily: 'Arial',
-  shapeType: 'rect',
-  gradientType: 'linear',
-  marqueeType: 'rect',
-  lassoPoints: [],
-  magicWandTolerance: 32,
+var A={
+st:{
+layers:[],aid:null,tool:'brush',bsize:10,bopacity:100,bhard:100,
+fg:'#000000',bg:'#ffffff',zoom:1,px:0,py:0,w:800,h:600,
+sel:null,hist:[],hidx:-1,grid:false,
+drawing:false,lx:0,ly:0,sx:0,sy:0,
+panning:false,psx:0,psy:0,
+cloneSrc:null,lassoPts:null,
+ffamily:'Arial',fsize:24
+}
 };
 
-App.init = function() {
-  Canvas.init();
-  Layers.init();
-  Tools.init();
-  Menus.init();
-  FileOps.init();
-  Filters.init();
-  App.setupEvents();
-  App.createDefaultLayer();
-  Canvas.render();
-  Layers.renderList();
-  App.updateStatus();
+A.init=function(){
+T.init();L.init();C.init();M.init();F.init();Fl.init();
+A.events();A.defaultLayer();C.render();L.render();A.status();A.opts();
 };
 
-App.createDefaultLayer = function() {
-  var canvas = document.createElement('canvas');
-  canvas.width = App.state.canvasWidth;
-  canvas.height = App.state.canvasHeight;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  Layers.addLayer('Background', canvas, true);
+A.defaultLayer=function(){
+var c=document.createElement('canvas');c.width=A.st.w;c.height=A.st.h;
+var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+L.add('Background',c,true);
 };
 
-App.setupEvents = function() {
-  document.addEventListener('keydown', App.handleKey);
-  document.addEventListener('click', function(e) {
-    var ctxMenu = document.getElementById('context-menu');
-    if (!ctxMenu.classList.contains('hidden') && !ctxMenu.contains(e.target)) {
-      ctxMenu.classList.add('hidden');
-    }
-  });
-
-  var workspace = document.getElementById('workspace');
-  workspace.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
-  workspace.addEventListener('drop', function(e) {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) {
-      FileOps.loadFile(e.dataTransfer.files[0]);
-    }
-  });
-
-  document.getElementById('zoom-slider').addEventListener('input', function() {
-    App.state.zoom = parseInt(this.value) / 100;
-    document.getElementById('zoom-value').textContent = this.value + '%';
-    Canvas.render();
-    App.updateStatus();
-  });
-
-  document.getElementById('layer-opacity').addEventListener('input', function() {
-    var layer = Layers.getActive();
-    if (layer) {
-      layer.opacity = parseInt(this.value);
-      document.getElementById('opacity-value').textContent = this.value + '%';
-      Canvas.render();
-    }
-  });
-
-  document.getElementById('blend-mode').addEventListener('change', function() {
-    var layer = Layers.getActive();
-    if (layer) {
-      layer.blendMode = this.value;
-      Canvas.render();
-    }
-  });
-
-  document.querySelectorAll('.panel-tab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      document.querySelectorAll('.panel-tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.panel-content').forEach(function(p) { p.style.display = 'none'; });
-      this.classList.add('active');
-      var panelId = 'panel-' + this.dataset.panel;
-      document.getElementById(panelId).style.display = 'flex';
-      if (this.dataset.panel === 'layers') Layers.renderList();
-    });
-  });
-
-  document.querySelector('[data-panel="layers"]').classList.add('active');
-  document.querySelectorAll('.panel-content').forEach(function(p) { p.style.display = 'none'; });
-  document.getElementById('panel-layers').style.display = 'flex';
-
-  document.getElementById('btn-new-layer').addEventListener('click', Layers.addNewLayer);
-  document.getElementById('btn-duplicate-layer').addEventListener('click', Layers.duplicateActive);
-  document.getElementById('btn-delete-layer').addEventListener('click', Layers.deleteActive);
-  document.getElementById('btn-merge-down').addEventListener('click', Layers.mergeDown);
-  document.getElementById('btn-flatten').addEventListener('click', Layers.flatten);
-
-  document.querySelectorAll('.adj-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      Filters.applyAdjustment(this.dataset.adj);
-    });
-  });
+A.events=function(){
+document.addEventListener('keydown',A.key);
+document.addEventListener('click',function(e){var m=document.getElementById('cmenu');if(!m.classList.contains('hid')&&!m.contains(e.target))m.classList.add('hid')});
+var ws=document.getElementById('workspace');
+ws.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='copy'});
+ws.addEventListener('drop',function(e){e.preventDefault();if(e.dataTransfer.files.length>0)F.load(e.dataTransfer.files[0])});
+document.getElementById('zslider').addEventListener('input',function(){A.st.zoom=parseInt(this.value)/100;document.getElementById('zval').textContent=this.value+'%';C.render();A.status()});
+document.getElementById('lopacity').addEventListener('input',function(){var l=L.get();if(l){l.opacity=parseInt(this.value);document.getElementById('oval').textContent=this.value+'%';C.render()}});
+document.getElementById('blend').addEventListener('change',function(){var l=L.get();if(l){l.blend=this.value;C.render()}});
+document.querySelectorAll('.ptab').forEach(function(tab){tab.addEventListener('click',function(){document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('act')});document.querySelectorAll('.pcontent').forEach(function(p){p.style.display='none'});this.classList.add('act');document.getElementById('panel-'+this.dataset.p).style.display='flex'})});
+document.getElementById('btn-nl').addEventListener('click',L.addNew);
+document.getElementById('btn-dl').addEventListener('click',L.dup);
+document.getElementById('btn-rl').addEventListener('click',L.del);
+document.getElementById('btn-ml').addEventListener('click',L.mergeDown);
+document.getElementById('btn-fl').addEventListener('click',L.flatten);
+document.querySelectorAll('.abtn').forEach(function(btn){btn.addEventListener('click',function(){Fl.applyAdj(this.dataset.a)})});
 };
 
-App.handleKey = function(e) {
-  var ctrl = e.ctrlKey || e.metaKey;
-  if (ctrl) {
-    switch(e.key.toLowerCase()) {
-      case 'z': e.preventDefault(); App.undo(); return;
-      case 'y': e.preventDefault(); App.redo(); return;
-      case 's': e.preventDefault(); FileOps.exportPNG(); return;
-      case 'o': e.preventDefault(); FileOps.openFile(); return;
-      case 'a': e.preventDefault(); App.selectAll(); return;
-      case 'd': e.preventDefault(); App.deselect(); return;
-      case 'j': e.preventDefault(); Layers.duplicateActive(); return;
-      case 'e': e.preventDefault(); Layers.mergeDown(); return;
-      case 'n': if (e.shiftKey) { e.preventDefault(); Layers.addNewLayer(); } return;
-    }
-  }
-  switch(e.key.toLowerCase()) {
-    case 'v': App.setTool('move'); break;
-    case 'm': App.setTool(e.shiftKey ? 'marquee-ellipse' : 'marquee-rect'); break;
-    case 'l': App.setTool(e.shiftKey ? 'magic-wand' : 'lasso'); break;
-    case 'w': App.setTool('magic-wand'); break;
-    case 'c': App.setTool(e.shiftKey ? 'crop' : 'eyedropper'); break;
-    case 'i': App.setTool('eyedropper'); break;
-    case 'j': App.setTool('spot-healing'); break;
-    case 'b': App.setTool('brush'); break;
-    case 's': if (!ctrl) App.setTool('clone-stamp'); break;
-    case 'y': App.setTool('history-brush'); break;
-    case 'e': App.setTool('eraser'); break;
-    case 'g': App.setTool('gradient'); break;
-    case 'r': App.setTool('blur'); break;
-    case 'o': if (!ctrl) App.setTool('dodge'); break;
-    case 'p': App.setTool('pen'); break;
-    case 't': App.setTool('text'); break;
-    case 'u': App.setTool('shape'); break;
-    case 'h': App.setTool('hand'); break;
-    case 'z': if (!ctrl) App.setTool('zoom'); break;
-    case 'x': App.swapColors(); break;
-    case 'd': if (!ctrl) { App.state.fgColor = '#000000'; App.state.bgColor = '#ffffff'; } break;
-    case '[': App.state.brushSize = Math.max(1, App.state.brushSize - 5); break;
-    case ']': App.state.brushSize = Math.min(500, App.state.brushSize + 5); break;
-    case ' ':
-      if (!e.repeat) { e.preventDefault(); App.setTool('hand'); }
-      break;
-    case 'delete':
-    case 'backspace':
-      App.clearSelection();
-      break;
-  }
+A.key=function(e){
+var ctrl=e.ctrlKey||e.metaKey;
+if(ctrl){switch(e.key.toLowerCase()){
+case'z':e.preventDefault();A.undo();return;
+case'y':e.preventDefault();A.redo();return;
+case's':e.preventDefault();F.exportPNG();return;
+case'o':e.preventDefault();F.openFile();return;
+case'a':e.preventDefault();A.selAll();return;
+case'd':e.preventDefault();A.desel();return;
+case'j':e.preventDefault();L.dup();return;
+case'e':e.preventDefault();L.mergeDown();return;
+case'n':if(e.shiftKey){e.preventDefault();L.addNew()}return;
+}}
+switch(e.key.toLowerCase()){
+case'v':A.setTool('move');break;
+case'm':A.setTool(e.shiftKey?'marquee-ellipse':'marquee-rect');break;
+case'l':A.setTool(e.shiftKey?'magic-wand':'lasso');break;
+case'w':A.setTool('magic-wand');break;
+case'c':A.setTool(e.shiftKey?'crop':'eyedropper');break;
+case'i':A.setTool('eyedropper');break;
+case'j':if(!ctrl)A.setTool('spot-healing');break;
+case'b':A.setTool('brush');break;
+case's':if(!ctrl)A.setTool('clone-stamp');break;
+case'y':A.setTool('history-brush');break;
+case'e':A.setTool('eraser');break;
+case'g':A.setTool('gradient');break;
+case'r':A.setTool('blur');break;
+case'o':if(!ctrl)A.setTool('dodge');break;
+case'p':A.setTool('pen');break;
+case't':A.setTool('text');break;
+case'u':A.setTool('shape');break;
+case'h':A.setTool('hand');break;
+case'z':if(!ctrl)A.setTool('zoom');break;
+case'x':var t=A.st.fg;A.st.fg=A.st.bg;A.st.bg=t;break;
+case'd':if(!ctrl){A.st.fg='#000000';A.st.bg='#ffffff'}break;
+case'[':A.st.bsize=Math.max(1,A.st.bsize-5);A.opts();break;
+case']':A.st.bsize=Math.min(500,A.st.bsize+5);A.opts();break;
+case' ':if(!e.repeat){e.preventDefault();A.setTool('hand')}break;
+case'delete':case'backspace':A.clearSel();break;
+}
 };
 
-App.setTool = function(tool) {
-  App.state.activeTool = tool;
-  document.querySelectorAll('.tool-btn').forEach(function(btn) {
-    btn.classList.toggle('active', btn.dataset.tool === tool);
-  });
-  Tools.updateOptions();
-  App.updateStatus();
-  Canvas.updateCursor();
+A.setTool=function(tool){
+A.st.tool=tool;
+document.querySelectorAll('.tb').forEach(function(b){b.classList.toggle('act',b.dataset.t===tool)});
+A.opts();A.status();C.cursor();
 };
 
-App.swapColors = function() {
-  var temp = App.state.fgColor;
-  App.state.fgColor = App.state.bgColor;
-  App.state.bgColor = temp;
+A.undo=function(){if(A.st.hidx>=0){var s=A.st.hist[A.st.hidx];L.restore(s);A.st.hidx--;C.render();L.render();A.renderHist()}};
+A.redo=function(){if(A.st.hidx<A.st.hist.length-1){A.st.hidx++;var s=A.st.hist[A.st.hidx];L.restore(s);C.render();L.render();A.renderHist()}};
+
+A.saveHist=function(){
+var s=L.snapshot();
+A.st.hist=A.st.hist.slice(0,A.st.hidx+1);
+A.st.hist.push(s);A.st.hidx=A.st.hist.length-1;
+if(A.st.hist.length>50){A.st.hist.shift();A.st.hidx--}
+A.renderHist();
 };
 
-App.undo = function() {
-  if (App.state.historyIndex >= 0) {
-    var snap = App.state.history[App.state.historyIndex];
-    Layers.restoreSnapshot(snap);
-    App.state.historyIndex--;
-    Canvas.render();
-    Layers.renderList();
-  }
+A.renderHist=function(){
+var list=document.getElementById('hlist');if(!list)return;list.innerHTML='';
+for(var i=0;i<A.st.hist.length;i++){
+var item=document.createElement('div');
+item.className='hi'+(i===A.st.hidx?' act':'')+(i>A.st.hidx?' fut':'');
+item.textContent=A.st.hist[i].name;
+item.addEventListener('click',function(){
+var idx=Array.prototype.indexOf.call(list.children,this);
+if(idx<=A.st.hidx){while(A.st.hidx>idx)A.undo()}
+else{while(A.st.hidx<idx)A.redo()}
+});
+list.appendChild(item);
+}
 };
 
-App.redo = function() {
-  if (App.state.historyIndex < App.state.history.length - 1) {
-    App.state.historyIndex++;
-    var snap = App.state.history[App.state.historyIndex];
-    Layers.restoreSnapshot(snap);
-    Canvas.render();
-    Layers.renderList();
-  }
+A.selAll=function(){A.st.sel={x:0,y:0,w:A.st.w,h:A.st.h};C.render();A.status()};
+A.desel=function(){A.st.sel=null;C.render();A.status()};
+A.clearSel=function(){var l=L.get();if(!l)return;A.saveHist();var c=l.canvas.getContext('2d');if(A.st.sel)c.clearRect(A.st.sel.x,A.st.sel.y,A.st.sel.w,A.st.sel.h);else c.clearRect(0,0,l.canvas.width,l.canvas.height);C.render();L.thumb(l)};
+
+A.status=function(){
+var n={move:'Move','marquee-rect':'Rect Marquee','marquee-ellipse':'Ellip Marquee',lasso:'Lasso','magic-wand':'Magic Wand',crop:'Crop',eyedropper:'Eyedropper','spot-healing':'Spot Healing',brush:'Brush','clone-stamp':'Clone Stamp','history-brush':'History Brush',eraser:'Eraser',gradient:'Gradient',blur:'Blur',dodge:'Dodge/Burn',pen:'Pen',text:'Type',shape:'Shape',hand:'Hand',zoom:'Zoom'};
+document.getElementById('stool').textContent=n[A.st.tool]||A.st.tool;
+document.getElementById('szoom').textContent=Math.round(A.st.zoom*100)+'%';
+document.getElementById('ssize').textContent=A.st.w+' × '+A.st.h;
+var s=document.getElementById('ssel');
+if(A.st.sel)s.textContent='Sel: '+Math.round(A.st.sel.w)+' × '+Math.round(A.st.sel.h);
+else s.textContent='';
 };
 
-App.saveHistory = function() {
-  var snap = Layers.createSnapshot();
-  App.state.history = App.state.history.slice(0, App.state.historyIndex + 1);
-  App.state.history.push(snap);
-  App.state.historyIndex = App.state.history.length - 1;
-  if (App.state.history.length > 50) {
-    App.state.history.shift();
-    App.state.historyIndex--;
-  }
+A.opts=function(){
+var c=document.getElementById('tool-options');var h='',t=A.st.tool;
+if(['brush','eraser','clone-stamp','history-brush'].indexOf(t)!==-1){
+h='<label>Size:</label><input type="number" id="obs" value="'+A.st.bsize+'" min="1" max="500" style="width:50px"><label>Opacity:</label><input type="number" id="obo" value="'+A.st.bopacity+'" min="1" max="100" style="width:50px"><label>Hardness:</label><input type="number" id="obh" value="'+A.st.bhard+'" min="0" max="100" style="width:50px"'}
+else if(t==='text'){
+h='<label>Font:</label><select id="ofont"><option'+(A.st.ffamily==='Arial'?' selected':'')+'>Arial</option><option'+(A.st.ffamily==='Helvetica'?' selected':'')+'>Helvetica</option><option'+(A.st.ffamily==='Times New Roman'?' selected':'')+'>Times</option><option'+(A.st.ffamily==='Courier New'?' selected':'')+'>Courier</option><option'+(A.st.ffamily==='Verdana'?' selected':'')+'>Verdana</option></select><label>Size:</label><input type="number" id="ofs" value="'+A.st.fsize+'" min="1" max="500" style="width:50px"'}
+else if(t==='marquee-rect'||t==='marquee-ellipse'){
+h='<label>Mode:</label><select><option>New Selection</option><option>Add</option><option>Subtract</option><option>Intersect</option></select>'}
+else if(t==='magic-wand'){
+h='<label>Tolerance:</label><input type="number" id="otol" value="32" min="0" max="255" style="width:50px"'}
+else if(t==='gradient'){
+h='<label>Type:</label><select id="ogt"><option value="linear">Linear</option><option value="radial">Radial</option></select>'}
+else if(t==='shape'){
+h='<label>Shape:</label><select id="osh"><option value="rect">Rectangle</option><option value="ellipse">Ellipse</option><option value="line">Line</option></select>'}
+else if(t==='zoom'){
+h='<label>Zoom:</label><span>'+Math.round(A.st.zoom*100)+'%</span>'}
+else if(t==='crop'){
+h='<label>Crop:</label><span>Drag to select area</span>'}
+else{
+h='<span style="color:#888">'+(T.list.find(function(x){return x.id===t})||{}).l||t+'</span>'}
+c.innerHTML=h;
+var bs=document.getElementById('obs');if(bs)bs.addEventListener('change',function(){A.st.bsize=parseInt(this.value)});
+var bo=document.getElementById('obo');if(bo)bo.addEventListener('change',function(){A.st.bopacity=parseInt(this.value)});
+var bh=document.getElementById('obh');if(bh)bh.addEventListener('change',function(){A.st.bhard=parseInt(this.value)});
+var fo=document.getElementById('ofont');if(fo)fo.addEventListener('change',function(){A.st.ffamily=this.value});
+var fs=document.getElementById('ofs');if(fs)fs.addEventListener('change',function(){A.st.fsize=parseInt(this.value)});
+var ot=document.getElementById('otol');if(ot)ot.addEventListener('change',function(){A.st.magicWandTolerance=parseInt(this.value)});
+var og=document.getElementById('ogt');if(og)og.addEventListener('change',function(){A.st.gradientType=this.value});
+var os=document.getElementById('osh');if(os)os.addEventListener('change',function(){A.st.shapeType=this.value});
 };
 
-App.selectAll = function() {
-  App.state.selection = { x: 0, y: 0, w: App.state.canvasWidth, h: App.state.canvasHeight };
-  Canvas.render();
-  App.updateStatus();
-};
+A.toCanvas=function(sx,sy){var r=document.getElementById('canvas-container').getBoundingClientRect();return{x:(sx-r.left-A.st.px)/A.st.zoom,y:(sy-r.top-A.st.py)/A.st.zoom}};
 
-App.deselect = function() {
-  App.state.selection = null;
-  Canvas.render();
-  App.updateStatus();
-};
+A.showModal=function(html){document.getElementById('modal').innerHTML=html;document.getElementById('moverlay').classList.remove('hid')};
+A.hideModal=function(){document.getElementById('moverlay').classList.add('hid')};
 
-App.clearSelection = function() {
-  var layer = Layers.getActive();
-  if (!layer) return;
-  App.saveHistory();
-  var ctx = layer.canvas.getContext('2d');
-  if (App.state.selection) {
-    ctx.clearRect(App.state.selection.x, App.state.selection.y, App.state.selection.w, App.state.selection.h);
-  } else {
-    ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
-  }
-  Canvas.render();
-  Layers.updateThumb(layer);
-};
-
-App.updateStatus = function() {
-  var toolNames = {
-    'move': 'Move', 'marquee-rect': 'Rectangular Marquee', 'marquee-ellipse': 'Elliptical Marquee',
-    'lasso': 'Lasso', 'magic-wand': 'Magic Wand', 'crop': 'Crop', 'eyedropper': 'Eyedropper',
-    'spot-healing': 'Spot Healing', 'brush': 'Brush', 'clone-stamp': 'Clone Stamp',
-    'history-brush': 'History Brush', 'eraser': 'Eraser', 'gradient': 'Gradient',
-    'blur': 'Blur/Sharpen', 'dodge': 'Dodge/Burn', 'pen': 'Pen', 'text': 'Type',
-    'shape': 'Shape', 'hand': 'Hand', 'zoom': 'Zoom'
-  };
-  document.getElementById('status-tool').textContent = toolNames[App.state.activeTool] || App.state.activeTool;
-  document.getElementById('status-zoom').textContent = Math.round(App.state.zoom * 100) + '%';
-  document.getElementById('status-size').textContent = App.state.canvasWidth + ' × ' + App.state.canvasHeight;
-  var sel = document.getElementById('status-selection');
-  if (App.state.selection) {
-    sel.textContent = 'Sel: ' + Math.round(App.state.selection.w) + ' × ' + Math.round(App.state.selection.h);
-  } else {
-    sel.textContent = '';
-  }
-};
-
-App.updatePos = function(x, y) {
-  document.getElementById('status-pos').textContent = Math.round(x) + ', ' + Math.round(y);
-  document.getElementById('info-x').textContent = Math.round(x);
-  document.getElementById('info-y').textContent = Math.round(y);
-};
-
-App.showModal = function(html) {
-  document.getElementById('modal').innerHTML = html;
-  document.getElementById('modal-overlay').classList.remove('hidden');
-};
-
-App.hideModal = function() {
-  document.getElementById('modal-overlay').classList.add('hidden');
-};
-
-App.screenToCanvas = function(sx, sy) {
-  var container = document.getElementById('canvas-container');
-  var rect = container.getBoundingClientRect();
-  return {
-    x: (sx - rect.left - App.state.panX) / App.state.zoom,
-    y: (sy - rect.top - App.state.panY) / App.state.zoom
-  };
-};
-
-window.App = App;
+window.A=A;

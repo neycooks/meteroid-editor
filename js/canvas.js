@@ -1,436 +1,264 @@
-var Canvas = {};
+var C={};
 
-Canvas.init = function() {
-  Canvas.canvas = document.getElementById('canvas');
-  Canvas.ctx = Canvas.canvas.getContext('2d');
-  Canvas.overlay = document.getElementById('overlay');
-  Canvas.octx = Canvas.overlay.getContext('2d');
-  Canvas.container = document.getElementById('canvas-container');
-
-  Canvas.canvas.addEventListener('mousedown', Canvas.onMouseDown);
-  Canvas.canvas.addEventListener('mousemove', Canvas.onMouseMove);
-  Canvas.canvas.addEventListener('mouseup', Canvas.onMouseUp);
-  Canvas.canvas.addEventListener('mouseleave', Canvas.onMouseUp);
-  Canvas.canvas.addEventListener('wheel', Canvas.onWheel, { passive: false });
-  Canvas.canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-  Canvas.resize();
-  window.addEventListener('resize', Canvas.resize);
+C.init=function(){
+C.cv=document.getElementById('canvas');
+C.cx=C.cv.getContext('2d');
+C.ov=document.getElementById('overlay');
+C.ox=C.ov.getContext('2d');
+C.ct=document.getElementById('canvas-container');
+C.bc=document.getElementById('bcur');
+C.cv.addEventListener('mousedown',C.down);
+C.cv.addEventListener('mousemove',C.move);
+C.cv.addEventListener('mouseup',C.up);
+C.cv.addEventListener('mouseleave',C.up);
+C.cv.addEventListener('wheel',C.wheel,{passive:false});
+C.cv.addEventListener('contextmenu',function(e){e.preventDefault()});
+C.resize();
+window.addEventListener('resize',C.resize);
 };
 
-Canvas.resize = function() {
-  var container = Canvas.container;
-  Canvas.canvas.width = container.clientWidth;
-  Canvas.canvas.height = container.clientHeight;
-  Canvas.overlay.width = container.clientWidth;
-  Canvas.overlay.height = container.clientHeight;
-  Canvas.render();
+C.resize=function(){
+var w=C.ct.clientWidth;
+var h=C.ct.clientHeight;
+C.cv.width=w;C.cv.height=h;
+C.ov.width=w;C.ov.height=h;
+C.render();
 };
 
-Canvas.render = function() {
-  var ctx = Canvas.ctx;
-  var w = Canvas.canvas.width;
-  var h = Canvas.canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  ctx.save();
-  ctx.translate(App.state.panX, App.state.panY);
-  ctx.scale(App.state.zoom, App.state.zoom);
-
-  ctx.fillStyle = '#808080';
-  ctx.fillRect(0, 0, App.state.canvasWidth, App.state.canvasHeight);
-
-  var cs = 8;
-  for (var y = 0; y < App.state.canvasHeight; y += cs) {
-    for (var x = 0; x < App.state.canvasWidth; x += cs) {
-      ctx.fillStyle = ((Math.floor(x / cs) + Math.floor(y / cs)) % 2 === 0) ? '#ccc' : '#999';
-      ctx.fillRect(x, y, cs, cs);
-    }
-  }
-
-  for (var i = App.state.layers.length - 1; i >= 0; i--) {
-    var layer = App.state.layers[i];
-    if (!layer.visible) continue;
-    ctx.globalAlpha = layer.opacity / 100;
-    ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
-    ctx.drawImage(layer.canvas, layer.x, layer.y);
-  }
-
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1;
-
-  if (App.state.selection) {
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1 / App.state.zoom;
-    ctx.setLineDash([4 / App.state.zoom, 4 / App.state.zoom]);
-    ctx.strokeRect(App.state.selection.x, App.state.selection.y, App.state.selection.w, App.state.selection.h);
-    ctx.setLineDash([]);
-  }
-
-  if (App.state.showGrid && App.state.zoom > 4) {
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 1 / App.state.zoom;
-    for (var gx = 0; gx <= App.state.canvasWidth; gx++) {
-      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, App.state.canvasHeight); ctx.stroke();
-    }
-    for (var gy = 0; gy <= App.state.canvasHeight; gy++) {
-      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(App.state.canvasWidth, gy); ctx.stroke();
-    }
-  }
-
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 1 / App.state.zoom;
-  ctx.strokeRect(0, 0, App.state.canvasWidth, App.state.canvasHeight);
-
-  ctx.restore();
-
-  Canvas.renderOverlay();
+C.render=function(){
+var c=C.cx;
+var w=C.cv.width;
+var h=C.cv.height;
+c.clearRect(0,0,w,h);
+c.save();
+c.translate(A.st.px,A.st.py);
+c.scale(A.st.zoom,A.st.zoom);
+c.fillStyle='#808080';
+c.fillRect(0,0,A.st.w,A.st.h);
+var cs=8;
+for(var y=0;y<A.st.h;y+=cs){for(var x=0;x<A.st.w;x+=cs){c.fillStyle=((Math.floor(x/cs)+Math.floor(y/cs))%2===0)?'#ccc':'#999';c.fillRect(x,y,cs,cs)}}
+for(var i=A.st.layers.length-1;i>=0;i--){
+var l=A.st.layers[i];
+if(!l.visible)continue;
+c.globalAlpha=l.opacity/100;
+c.globalCompositeOperation=l.blend==='normal'?'source-over':l.blend;
+c.drawImage(l.canvas,l.x,l.y);
+}
+c.globalCompositeOperation='source-over';
+c.globalAlpha=1;
+if(A.st.sel){
+c.strokeStyle='#fff';c.lineWidth=1/A.st.zoom;
+c.setLineDash([4/A.st.zoom,4/A.st.zoom]);
+c.strokeRect(A.st.sel.x,A.st.sel.y,A.st.sel.w,A.st.sel.h);
+c.setLineDash([]);
+}
+c.strokeStyle='#000';c.lineWidth=1/A.st.zoom;
+c.strokeRect(0,0,A.st.w,A.st.h);
+c.restore();
 };
 
-Canvas.renderOverlay = function() {
-  var ctx = Canvas.octx;
-  ctx.clearRect(0, 0, Canvas.overlay.width, Canvas.overlay.height);
-  ctx.save();
-  ctx.translate(App.state.panX, App.state.panY);
-  ctx.scale(App.state.zoom, App.state.zoom);
-
-  if (App.state.isDrawing) {
-    var tool = App.state.activeTool;
-    if (tool === 'marquee-rect' || tool === 'marquee-ellipse') {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1 / App.state.zoom;
-      ctx.setLineDash([4 / App.state.zoom, 4 / App.state.zoom]);
-      var x = Math.min(App.state.lastX, App.state.startX);
-      var y = Math.min(App.state.lastY, App.state.startY);
-      var w = Math.abs(App.state.lastX - App.state.startX);
-      var h = Math.abs(App.state.lastY - App.state.startY);
-      if (tool === 'marquee-rect') {
-        ctx.strokeRect(x, y, w, h);
-      } else {
-        ctx.beginPath();
-        ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-    }
-    if (tool === 'lasso' && App.state.lassoPoints.length > 1) {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1 / App.state.zoom;
-      ctx.setLineDash([4 / App.state.zoom, 4 / App.state.zoom]);
-      ctx.beginPath();
-      ctx.moveTo(App.state.lassoPoints[0].x, App.state.lassoPoints[0].y);
-      for (var i = 1; i < App.state.lassoPoints.length; i++) {
-        ctx.lineTo(App.state.lassoPoints[i].x, App.state.lassoPoints[i].y);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    if (tool === 'crop') {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1 / App.state.zoom;
-      var x = Math.min(App.state.lastX, App.state.startX);
-      var y = Math.min(App.state.lastY, App.state.startY);
-      var w = Math.abs(App.state.lastX - App.state.startX);
-      var h = Math.abs(App.state.lastY - App.state.startY);
-      ctx.strokeRect(x, y, w, h);
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0, 0, App.state.canvasWidth, y);
-      ctx.fillRect(0, y + h, App.state.canvasWidth, App.state.canvasHeight - y - h);
-      ctx.fillRect(0, y, x, h);
-      ctx.fillRect(x + w, y, App.state.canvasWidth - x - w, h);
-    }
-  }
-
-  if (App.state.cloneSource) {
-    ctx.strokeStyle = '#0f0';
-    ctx.lineWidth = 1 / App.state.zoom;
-    ctx.beginPath();
-    ctx.arc(App.state.cloneSource.x, App.state.cloneSource.y, 10 / App.state.zoom, 0, Math.PI * 2);
-    ctx.moveTo(App.state.cloneSource.x - 15 / App.state.zoom, App.state.cloneSource.y);
-    ctx.lineTo(App.state.cloneSource.x + 15 / App.state.zoom, App.state.cloneSource.y);
-    ctx.moveTo(App.state.cloneSource.x, App.state.cloneSource.y - 15 / App.state.zoom);
-    ctx.lineTo(App.state.cloneSource.x, App.state.cloneSource.y + 15 / App.state.zoom);
-    ctx.stroke();
-  }
-
-  ctx.restore();
+C.down=function(e){
+var p=A.toCanvas(e.clientX,e.clientY);
+if(e.button===1||A.st.tool==='hand'||(A.st.tool==='move'&&e.altKey)){
+A.st.panning=true;A.st.psx=e.clientX-A.st.px;A.st.psy=e.clientY-A.st.py;
+return;
+}
+A.st.drawing=true;
+A.st.sx=p.x;A.st.sy=p.y;
+A.st.lx=p.x;A.st.ly=p.y;
+if(A.st.tool==='eyedropper'){
+var l=L.get();
+if(l){var x=l.canvas.getContext('2d');var px=x.getImageData(Math.floor(p.x),Math.floor(p.y),1,1).data;A.st.fg=U.hex(px[0],px[1],px[2])}
+A.st.drawing=false;return;
+}
+if(A.st.tool==='clone-stamp'&&e.altKey){
+A.st.cloneSrc={x:p.x,y:p.y};
+A.st.drawing=false;return;
+}
+if(A.st.tool==='zoom'){
+A.st.zoom=e.altKey?A.st.zoom/1.5:A.st.zoom*1.5;
+A.st.zoom=U.clamp(A.st.zoom,0.01,32);
+document.getElementById('zslider').value=Math.round(A.st.zoom*100);
+document.getElementById('zval').textContent=Math.round(A.st.zoom*100)+'%';
+C.render();A.status();A.st.drawing=false;return;
+}
+if(['brush','eraser','clone-stamp','blur','dodge','history-brush'].indexOf(A.st.tool)!==-1){
+var l=L.get();
+if(l&&!l.locked){var x=l.canvas.getContext('2d');C.brush(x,p.x,p.y,p.x,p.y);C.render()}
+}
+if(A.st.tool==='text'){
+var txt=prompt('Enter text:','Text');
+if(txt){
+A.saveHist();
+var l=L.get();
+if(l&&!l.locked){
+var x=l.canvas.getContext('2d');
+x.fillStyle=A.st.fg;
+x.font=A.st.fsize+'px '+A.st.ffamily;
+x.fillText(txt,p.x,p.y+A.st.fsize);
+C.render();L.thumb(l);
+}
+}
+A.st.drawing=false;
+}
 };
 
-Canvas.onMouseDown = function(e) {
-  var pos = App.screenToCanvas(e.clientX, e.clientY);
-
-  if (e.button === 1 || App.state.activeTool === 'hand' || (App.state.activeTool === 'move' && e.altKey)) {
-    App.state.isPanning = true;
-    App.state.panStartX = e.clientX - App.state.panX;
-    App.state.panStartY = e.clientY - App.state.panY;
-    return;
-  }
-
-  App.state.isDrawing = true;
-  App.state.startX = pos.x;
-  App.state.startY = pos.y;
-  App.state.lastX = pos.x;
-  App.state.lastY = pos.y;
-
-  if (App.state.activeTool === 'eyedropper') {
-    var layer = Layers.getActive();
-    if (layer) {
-      var ctx = layer.canvas.getContext('2d');
-      var pixel = ctx.getImageData(Math.floor(pos.x), Math.floor(pos.y), 1, 1).data;
-      App.state.fgColor = Utils.rgbToHex(pixel[0], pixel[1], pixel[2]);
-      document.getElementById('info-r').textContent = pixel[0];
-      document.getElementById('info-g').textContent = pixel[1];
-      document.getElementById('info-b').textContent = pixel[2];
-    }
-    App.state.isDrawing = false;
-    return;
-  }
-
-  if (App.state.activeTool === 'clone-stamp' && e.altKey) {
-    App.state.cloneSource = { x: pos.x, y: pos.y };
-    Canvas.renderOverlay();
-    App.state.isDrawing = false;
-    return;
-  }
-
-  if (App.state.activeTool === 'zoom') {
-    if (e.altKey) {
-      App.state.zoom /= 1.5;
-    } else {
-      App.state.zoom *= 1.5;
-    }
-    App.state.zoom = Math.max(0.01, Math.min(32, App.state.zoom));
-    document.getElementById('zoom-slider').value = Math.round(App.state.zoom * 100);
-    document.getElementById('zoom-value').textContent = Math.round(App.state.zoom * 100) + '%';
-    Canvas.render();
-    App.updateStatus();
-    App.state.isDrawing = false;
-    return;
-  }
-
-  if (App.state.activeTool === 'brush' || App.state.activeTool === 'eraser' || App.state.activeTool === 'clone-stamp' || App.state.activeTool === 'blur' || App.state.activeTool === 'dodge' || App.state.activeTool === 'history-brush') {
-    var layer = Layers.getActive();
-    if (layer && !layer.locked) {
-      var ctx = layer.canvas.getContext('2d');
-      Canvas.drawBrushStroke(ctx, pos.x, pos.y, pos.x, pos.y);
-      Canvas.render();
-    }
-  }
-
-  if (App.state.activeTool === 'text') {
-    var text = prompt('Enter text:', 'Text');
-    if (text) {
-      App.saveHistory();
-      var layer = Layers.getActive();
-      if (layer && !layer.locked) {
-        var ctx = layer.canvas.getContext('2d');
-        ctx.fillStyle = App.state.fgColor;
-        ctx.font = App.state.fontSize + 'px ' + App.state.fontFamily;
-        ctx.fillText(text, pos.x, pos.y + App.state.fontSize);
-        Canvas.render();
-        Layers.updateThumb(layer);
-      }
-    }
-    App.state.isDrawing = false;
-  }
+C.move=function(e){
+var p=A.toCanvas(e.clientX,e.clientY);
+document.getElementById('spos').textContent=Math.round(p.x)+', '+Math.round(p.y);
+if(A.st.panning){
+A.st.px=e.clientX-A.st.psx;
+A.st.py=e.clientY-A.st.psy;
+C.render();return;
+}
+if(!A.st.drawing)return;
+A.st.lx=p.x;A.st.ly=p.y;
+if(['brush','eraser','clone-stamp','blur','dodge','history-brush'].indexOf(A.st.tool)!==-1){
+var l=L.get();
+if(l&&!l.locked){var x=l.canvas.getContext('2d');C.brush(x,p.x,p.y,A.st._px||p.x,A.st._py||p.y);C.render()}
+}
+A.st._px=p.x;A.st._py=p.y;
+if(['marquee-rect','marquee-ellipse','crop','lasso'].indexOf(A.st.tool)!==-1){
+if(A.st.tool==='lasso'){if(!A.st.lassoPts)A.st.lassoPts=[];A.st.lassoPts.push({x:p.x,y:p.y})}
+C.overlay();
+}
 };
 
-Canvas.onMouseMove = function(e) {
-  var pos = App.screenToCanvas(e.clientX, e.clientY);
-  App.updatePos(pos.x, pos.y);
-
-  if (App.state.isPanning) {
-    App.state.panX = e.clientX - App.state.panStartX;
-    App.state.panY = e.clientY - App.state.panStartY;
-    Canvas.render();
-    return;
-  }
-
-  if (!App.state.isDrawing) return;
-
-  App.state.lastX = pos.x;
-  App.state.lastY = pos.y;
-
-  var tool = App.state.activeTool;
-  if (tool === 'brush' || tool === 'eraser' || tool === 'clone-stamp' || tool === 'blur' || tool === 'dodge' || tool === 'history-brush') {
-    var layer = Layers.getActive();
-    if (layer && !layer.locked) {
-      var ctx = layer.canvas.getContext('2d');
-      Canvas.drawBrushStroke(ctx, pos.x, pos.y, App.state._prevX || pos.x, App.state._prevY || pos.y);
-      Canvas.render();
-    }
-  }
-
-  App.state._prevX = pos.x;
-  App.state._prevY = pos.y;
-
-  if (tool === 'marquee-rect' || tool === 'marquee-ellipse' || tool === 'crop' || tool === 'lasso') {
-    if (tool === 'lasso') {
-      if (!App.state.lassoPoints.length) App.state.lassoPoints = [{ x: App.state.startX, y: App.state.startY }];
-      App.state.lassoPoints.push({ x: pos.x, y: pos.y });
-    }
-    Canvas.renderOverlay();
-  }
+C.up=function(e){
+if(A.st.panning){A.st.panning=false;return}
+if(!A.st.drawing)return;
+var p=A.toCanvas(e.clientX,e.clientY);
+var t=A.st.tool;
+if(t==='marquee-rect'||t==='marquee-ellipse'){
+var x=Math.min(A.st.sx,p.x),y=Math.min(A.st.sy,p.y);
+var w=Math.abs(p.x-A.st.sx),h=Math.abs(p.y-A.st.sy);
+if(w>2&&h>2)A.st.sel={x:x,y:y,w:w,h:h};
+A.status();
+}
+if(t==='lasso'&&A.st.lassoPts&&A.st.lassoPts.length>2){
+var mnX=Infinity,mnY=Infinity,mxX=-Infinity,mxY=-Infinity;
+A.st.lassoPts.forEach(function(pt){if(pt.x<mnX)mnX=pt.x;if(pt.y<mnY)mnY=pt.y;if(pt.x>mxX)mxX=pt.x;if(pt.y>mxY)mxY=pt.y});
+A.st.sel={x:mnX,y:mnY,w:mxX-mnX,h:mxY-mnY};
+A.st.lassoPts=[];A.status();
+}
+if(t==='crop'){
+var x=Math.min(A.st.sx,p.x),y=Math.min(A.st.sy,p.y);
+var w=Math.abs(p.x-A.st.sx),h=Math.abs(p.y-A.st.sy);
+if(w>10&&h>10){
+A.saveHist();
+A.st.layers.forEach(function(l){var tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;tmp.getContext('2d').drawImage(l.canvas,-x,-y);l.canvas=tmp;l.x=0;l.y=0});
+A.st.w=Math.round(w);A.st.h=Math.round(h);
+A.st.sel=null;A.st.px=0;A.st.py=0;
+C.resize();C.render();L.render();A.status();
+}
+}
+if(['brush','eraser','clone-stamp','blur','dodge','history-brush'].indexOf(t)!==-1){
+A.saveHist();var l=L.get();if(l)L.thumb(l);
+}
+A.st.drawing=false;A.st._px=null;A.st._py=null;
+C.render();
 };
 
-Canvas.onMouseUp = function(e) {
-  if (App.state.isPanning) {
-    App.state.isPanning = false;
-    return;
-  }
-
-  if (!App.state.isDrawing) return;
-
-  var pos = App.screenToCanvas(e.clientX, e.clientY);
-  var tool = App.state.activeTool;
-
-  if (tool === 'marquee-rect' || tool === 'marquee-ellipse') {
-    var x = Math.min(App.state.startX, pos.x);
-    var y = Math.min(App.state.startY, pos.y);
-    var w = Math.abs(pos.x - App.state.startX);
-    var h = Math.abs(pos.y - App.state.startY);
-    if (w > 2 && h > 2) {
-      App.state.selection = { x: x, y: y, w: w, h: h };
-    }
-    App.updateStatus();
-  }
-
-  if (tool === 'lasso' && App.state.lassoPoints.length > 2) {
-    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    App.state.lassoPoints.forEach(function(p) {
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-    });
-    App.state.selection = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-    App.state.lassoPoints = [];
-    App.updateStatus();
-  }
-
-  if (tool === 'crop') {
-    var x = Math.min(App.state.startX, pos.x);
-    var y = Math.min(App.state.startY, pos.y);
-    var w = Math.abs(pos.x - App.state.startX);
-    var h = Math.abs(pos.y - App.state.startY);
-    if (w > 10 && h > 10) {
-      App.saveHistory();
-      App.state.layers.forEach(function(layer) {
-        var temp = document.createElement('canvas');
-        temp.width = w;
-        temp.height = h;
-        var tctx = temp.getContext('2d');
-        tctx.drawImage(layer.canvas, -x, -y);
-        layer.canvas = temp;
-        layer.x = 0;
-        layer.y = 0;
-      });
-      App.state.canvasWidth = Math.round(w);
-      App.state.canvasHeight = Math.round(h);
-      App.state.selection = null;
-      App.state.panX = 0;
-      App.state.panY = 0;
-      Canvas.resize();
-      Canvas.render();
-      Layers.renderList();
-      App.updateStatus();
-    }
-  }
-
-  if (tool === 'brush' || tool === 'eraser' || tool === 'clone-stamp' || tool === 'blur' || tool === 'dodge' || tool === 'history-brush') {
-    App.saveHistory();
-    var layer = Layers.getActive();
-    if (layer) Layers.updateThumb(layer);
-  }
-
-  App.state.isDrawing = false;
-  App.state._prevX = null;
-  App.state._prevY = null;
-  Canvas.render();
+C.wheel=function(e){
+e.preventDefault();
+var d=e.deltaY>0?0.9:1.1;
+A.st.zoom=U.clamp(A.st.zoom*d,0.01,32);
+document.getElementById('zslider').value=Math.round(A.st.zoom*100);
+document.getElementById('zval').textContent=Math.round(A.st.zoom*100)+'%';
+C.render();A.status();
 };
 
-Canvas.onWheel = function(e) {
-  e.preventDefault();
-  var delta = e.deltaY > 0 ? 0.9 : 1.1;
-  App.state.zoom = Math.max(0.01, Math.min(32, App.state.zoom * delta));
-  document.getElementById('zoom-slider').value = Math.round(App.state.zoom * 100);
-  document.getElementById('zoom-value').textContent = Math.round(App.state.zoom * 100) + '%';
-  Canvas.render();
-  App.updateStatus();
+C.brush=function(ctx,x,y,lx,ly){
+var l=L.get();if(!l)return;
+ctx.globalAlpha=A.st.bopacity/100;
+ctx.lineCap='round';ctx.lineJoin='round';
+ctx.lineWidth=A.st.bsize;
+if(A.st.tool==='eraser'){ctx.globalCompositeOperation='destination-out'}
+else if(A.st.tool==='clone-stamp'){
+if(!A.st.cloneSrc)return;
+ctx.globalCompositeOperation='source-over';
+var dx=x-A.st.cloneSrc.x,dy=y-A.st.cloneSrc.y;
+var sx=lx-dx,sy=ly-dy;
+ctx.drawImage(l.canvas,sx-A.st.bsize/2,sy-A.st.bsize/2,A.st.bsize,A.st.bsize,lx-A.st.bsize/2,ly-A.st.bsize/2,A.st.bsize,A.st.bsize);
+ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;return;
+}
+else if(A.st.tool==='blur'){
+ctx.globalCompositeOperation='source-over';
+var d=ctx.getImageData(Math.floor(x-A.st.bsize/2),Math.floor(y-A.st.bsize/2),Math.ceil(A.st.bsize),Math.ceil(A.st.bsize));
+for(var i=0;i<d.data.length;i+=4){d.data[i]=Math.min(255,d.data[i]+2);d.data[i+1]=Math.min(255,d.data[i+1]+2);d.data[i+2]=Math.min(255,d.data[i+2]+2)}
+ctx.putImageData(d,Math.floor(x-A.st.bsize/2),Math.floor(y-A.st.bsize/2));
+ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;return;
+}
+else if(A.st.tool==='dodge'){
+ctx.globalCompositeOperation='source-over';
+var d=ctx.getImageData(Math.floor(x-A.st.bsize/2),Math.floor(y-A.st.bsize/2),Math.ceil(A.st.bsize),Math.ceil(A.st.bsize));
+for(var i=0;i<d.data.length;i+=4){d.data[i]=Math.min(255,d.data[i]+5);d.data[i+1]=Math.min(255,d.data[i+1]+5);d.data[i+2]=Math.min(255,d.data[i+2]+5)}
+ctx.putImageData(d,Math.floor(x-A.st.bsize/2),Math.floor(y-A.st.bsize/2));
+ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;return;
+}
+else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle=A.st.fg}
+ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();
+ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
 };
 
-Canvas.drawBrushStroke = function(ctx, x, y, lastX, lastY) {
-  var layer = Layers.getActive();
-  if (!layer) return;
-
-  ctx.globalAlpha = App.state.brushOpacity / 100;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = App.state.brushSize;
-
-  if (App.state.activeTool === 'eraser') {
-    ctx.globalCompositeOperation = 'destination-out';
-  } else if (App.state.activeTool === 'clone-stamp') {
-    if (!App.state.cloneSource) return;
-    ctx.globalCompositeOperation = 'source-over';
-    var dx = x - App.state.cloneSource.x;
-    var dy = y - App.state.cloneSource.y;
-    var sx = lastX - dx;
-    var sy = lastY - dy;
-    ctx.drawImage(layer.canvas, sx - App.state.brushSize/2, sy - App.state.brushSize/2, App.state.brushSize, App.state.brushSize, lastX - App.state.brushSize/2, lastY - App.state.brushSize/2, App.state.brushSize, App.state.brushSize);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    return;
-  } else if (App.state.activeTool === 'blur') {
-    ctx.globalCompositeOperation = 'source-over';
-    var imgData = ctx.getImageData(Math.floor(x - App.state.brushSize/2), Math.floor(y - App.state.brushSize/2), Math.ceil(App.state.brushSize), Math.ceil(App.state.brushSize));
-    var data = imgData.data;
-    for (var i = 0; i < data.length; i += 4) {
-      data[i] = Math.min(255, data[i] + 2);
-      data[i+1] = Math.min(255, data[i+1] + 2);
-      data[i+2] = Math.min(255, data[i+2] + 2);
-    }
-    ctx.putImageData(imgData, Math.floor(x - App.state.brushSize/2), Math.floor(y - App.state.brushSize/2));
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    return;
-  } else if (App.state.activeTool === 'dodge') {
-    ctx.globalCompositeOperation = 'source-over';
-    var imgData = ctx.getImageData(Math.floor(x - App.state.brushSize/2), Math.floor(y - App.state.brushSize/2), Math.ceil(App.state.brushSize), Math.ceil(App.state.brushSize));
-    var data = imgData.data;
-    for (var i = 0; i < data.length; i += 4) {
-      data[i] = Math.min(255, data[i] + 5);
-      data[i+1] = Math.min(255, data[i+1] + 5);
-      data[i+2] = Math.min(255, data[i+2] + 5);
-    }
-    ctx.putImageData(imgData, Math.floor(x - App.state.brushSize/2), Math.floor(y - App.state.brushSize/2));
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    return;
-  } else {
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = App.state.fgColor;
-  }
-
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(x, y);
-  ctx.stroke();
-
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1;
+C.overlay=function(){
+var c=C.ox;
+c.clearRect(0,0,C.ov.width,C.ov.height);
+c.save();
+c.translate(A.st.px,A.st.py);
+c.scale(A.st.zoom,A.st.zoom);
+if(A.st.drawing){
+var t=A.st.tool;
+if(t==='marquee-rect'||t==='marquee-ellipse'){
+c.strokeStyle='#fff';c.lineWidth=1/A.st.zoom;c.setLineDash([4/A.st.zoom,4/A.st.zoom]);
+var x=Math.min(A.st.lx,A.st.sx),y=Math.min(A.st.ly,A.st.sy);
+var w=Math.abs(A.st.lx-A.st.sx),h=Math.abs(A.st.ly-A.st.sy);
+if(t==='marquee-rect')c.strokeRect(x,y,w,h);
+else{c.beginPath();c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);c.stroke()}
+c.setLineDash([]);
+}
+if(t==='lasso'&&A.st.lassoPts&&A.st.lassoPts.length>1){
+c.strokeStyle='#fff';c.lineWidth=1/A.st.zoom;c.setLineDash([4/A.st.zoom,4/A.st.zoom]);
+c.beginPath();c.moveTo(A.st.lassoPts[0].x,A.st.lassoPts[0].y);
+for(var i=1;i<A.st.lassoPts.length;i++)c.lineTo(A.st.lassoPts[i].x,A.st.lassoPts[i].y);
+c.stroke();c.setLineDash([]);
+}
+if(t==='crop'){
+c.strokeStyle='#fff';c.lineWidth=1/A.st.zoom;
+var x=Math.min(A.st.lx,A.st.sx),y=Math.min(A.st.ly,A.st.sy);
+var w=Math.abs(A.st.lx-A.st.sx),h=Math.abs(A.st.ly-A.st.sy);
+c.strokeRect(x,y,w,h);
+c.fillStyle='rgba(0,0,0,0.5)';
+c.fillRect(0,0,A.st.w,y);c.fillRect(0,y+h,A.st.w,A.st.h-y-h);
+c.fillRect(0,y,x,h);c.fillRect(x+w,y,A.st.w-x-w,h);
+}
+}
+if(A.st.cloneSrc){
+c.strokeStyle='#0f0';c.lineWidth=1/A.st.zoom;
+c.beginPath();c.arc(A.st.cloneSrc.x,A.st.cloneSrc.y,10/A.st.zoom,0,Math.PI*2);
+c.moveTo(A.st.cloneSrc.x-15/A.st.zoom,A.st.cloneSrc.y);c.lineTo(A.st.cloneSrc.x+15/A.st.zoom,A.st.cloneSrc.y);
+c.moveTo(A.st.cloneSrc.x,A.st.cloneSrc.y-15/A.st.zoom);c.lineTo(A.st.cloneSrc.x,A.st.cloneSrc.y+15/A.st.zoom);
+c.stroke();
+}
+c.restore();
 };
 
-Canvas.updateCursor = function() {
-  var tool = App.state.activeTool;
-  var cursor = 'crosshair';
-  if (tool === 'move') cursor = 'move';
-  else if (tool === 'hand') cursor = 'grab';
-  else if (tool === 'zoom') cursor = 'zoom-in';
-  else if (tool === 'text') cursor = 'text';
-  else if (tool === 'eyedropper') cursor = 'crosshair';
-  Canvas.canvas.style.cursor = cursor;
-  Canvas.overlay.style.cursor = cursor;
+C.cursor=function(){
+var t=A.st.tool;
+if(['brush','eraser','clone-stamp','blur','dodge','history-brush'].indexOf(t)!==-1){
+C.bc.style.display='block';
+C.bc.style.width=(A.st.bsize*A.st.zoom)+'px';
+C.bc.style.height=(A.st.bsize*A.st.zoom)+'px';
+C.cv.style.cursor='none';C.ov.style.cursor='none';
+}else{
+C.bc.style.display='none';
+var cur='crosshair';
+if(t==='move')cur='move';
+else if(t==='hand')cur='grab';
+else if(t==='zoom')cur='zoom-in';
+else if(t==='text')cur='text';
+C.cv.style.cursor=cur;C.ov.style.cursor=cur;
+}
 };
 
-window.Canvas = Canvas;
+window.C=C;
