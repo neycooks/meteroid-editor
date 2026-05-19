@@ -1,12 +1,10 @@
-'use client';
+import dynamic from 'next/dynamic';
 
-import { EditorProvider } from '@/context/EditorContext';
-import Editor from '@/components/editor';
+const EditorWithNoSSR = dynamic(
+  () => import('@/components/editor/EditorWrapper'),
+  { ssr: false }
+);
 
 export default function Home() {
-  return (
-    <EditorProvider>
-      <Editor />
-    </EditorProvider>
-  );
+  return <EditorWithNoSSR />;
 }
