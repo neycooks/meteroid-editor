@@ -89,7 +89,7 @@ export default function Canvas() {
         }
       }
     },
-    [state.activeTool, state.panX, state.panY, state.zoom, getCanvasCoords, getActiveLayer, dispatch, drawBrush]
+    [state.activeTool, state.panX, state.panY, getCanvasCoords, getActiveLayer, dispatch, drawBrush]
   );
 
   const handleMouseMove = useCallback(
@@ -150,7 +150,7 @@ export default function Canvas() {
       }
     }
     isDrawing.current = false;
-  }, [state.activeTool, saveHistory]);
+  }, [state.activeTool, saveHistory, isPanning]);
 
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {

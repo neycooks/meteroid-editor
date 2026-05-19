@@ -65,7 +65,7 @@ export interface HistoryState {
   id: number;
   name: string;
   layers: LayerSnapshot[];
-  activeLayerId: string;
+  activeLayerId: string | null;
 }
 
 export interface LayerSnapshot {

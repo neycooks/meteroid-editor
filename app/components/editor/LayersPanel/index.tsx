@@ -138,6 +138,7 @@ export default function LayersPanel() {
             </button>
             <div className="w-8 h-8 bg-[#333] border border-[#555] flex-shrink-0 overflow-hidden">
               {layer.thumbnail ? (
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={layer.thumbnail} alt="" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700" />
