@@ -268,7 +268,8 @@ export default function MenuBar() {
     }
   };
 
-  const menus: { label: string; items: { label: string; shortcut?: string; action: string; separator?: boolean }[] }[] = [
+  type MenuItemType = { label: string; shortcut?: string; action: string; separator?: boolean } | { separator: true; label?: never; shortcut?: never; action?: never };
+  const menus: { label: string; items: MenuItemType[] }[] = [
     {
       label: 'File',
       items: [
